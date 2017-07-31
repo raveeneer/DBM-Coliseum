@@ -11,6 +11,7 @@ mod:RegisterEvents(
 	"SPELL_AURA_REFRESH", 	
 	"SPELL_AURA_REMOVED",
 	"SPELL_CAST_START",
+	"SPELL_CAST_SUCCESS",
 	"CHAT_MSG_RAID_BOSS_EMOTE"
 )
 
@@ -27,58 +28,63 @@ local Burrowed				= false
 -- Pursue
 local warnPursue			= mod:NewTargetAnnounce(67574, 4)
 local specWarnPursue		= mod:NewSpecialWarning("SpecWarnPursue")
-local warnHoP				= mod:NewTargetAnnounce(10278, 2, nil, false)--Heroic strat revolves around kiting pursue and using Hand of Protection.
-local timerHoP				= mod:NewBuffActiveTimer(10, 10278, nil, false)--So we will track bops to make this easier.
+local warnHoP				= mod:NewTargetAnnounce(10278, 2, nil, true)--Heroic strat revolves around kiting pursue and using Hand of Protection.
+local timerHoP				= mod:NewBuffActiveTimer(10, 10278, nil, true)--So we will track bops to make this easier.
+
 mod:AddBoolOption("PlaySoundOnPursue")
 mod:AddBoolOption("PursueIcon")
 
 -- Emerge
 local warnEmerge			= mod:NewAnnounce("WarnEmerge", 3, "Interface\\AddOns\\DBM-Core\\textures\\CryptFiendUnBurrow.blp")
 local warnEmergeSoon		= mod:NewAnnounce("WarnEmergeSoon", 1, "Interface\\AddOns\\DBM-Core\\textures\\CryptFiendUnBurrow.blp")
-local timerEmerge			= mod:NewTimer(65, "TimerEmerge", "Interface\\AddOns\\DBM-Core\\textures\\CryptFiendUnBurrow.blp")
+local timerEmerge			= mod:NewTimer(62, "TimerEmerge", "Interface\\AddOns\\DBM-Core\\textures\\CryptFiendUnBurrow.blp")
 
 -- Submerge
 local warnSubmerge			= mod:NewAnnounce("WarnSubmerge", 3, "Interface\\AddOns\\DBM-Core\\textures\\CryptFiendBurrow.blp")
 local warnSubmergeSoon		= mod:NewAnnounce("WarnSubmergeSoon", 1, "Interface\\AddOns\\DBM-Core\\textures\\CryptFiendBurrow.blp")
 local specWarnSubmergeSoon	= mod:NewSpecialWarning("specWarnSubmergeSoon", mod:IsTank())
-local timerSubmerge			= mod:NewTimer(75, "TimerSubmerge", "Interface\\AddOns\\DBM-Core\\textures\\CryptFiendBurrow.blp")
+local timerSubmerge			= mod:NewTimer(80, "TimerSubmerge", "Interface\\AddOns\\DBM-Core\\textures\\CryptFiendBurrow.blp")
 
 -- Phases
 local warnPhase3			= mod:NewPhaseAnnounce(3)
-local enrageTimer			= mod:NewBerserkTimer(570)	-- 9:30 ? hmpf (no enrage while submerged... this sucks)
+local enrageTimer			= mod:NewBerserkTimer(600)
 
--- Penetrating Cold
+-- Penetrating Cold 
 local specWarnPCold			= mod:NewSpecialWarningYou(68510, false)
-local timerPCold			= mod:NewBuffActiveTimer(15, 68509)
+local timerPCold			= mod:NewBuffActiveTimer(18, 68509)
 mod:AddBoolOption("SetIconsOnPCold", true)
 mod:AddBoolOption("AnnouncePColdIcons", false)
 mod:AddBoolOption("AnnouncePColdIconsRemoved", false)
 
--- Freezing Slash
+-- Freezing Slash 
 local warnFreezingSlash		= mod:NewTargetAnnounce(66012, 2, nil, mod:IsHealer() or mod:IsTank())
-local timerFreezingSlash	= mod:NewCDTimer(20, 66012, nil, mod:IsHealer() or mod:IsTank())
+local timerFreezingSlashCD	= mod:NewCDTimer(15, 66012, nil, mod:IsHealer() or mod:IsTank())
 
--- Shadow Strike
-local timerShadowStrike		= mod:NewNextTimer(30.5, 66134)
+-- Shadow Strike 
+local timerShadowStrike		= mod:NewNextTimer(30, 66134)
 local preWarnShadowStrike	= mod:NewSoonAnnounce(66134, 3)
 local warnShadowStrike		= mod:NewSpellAnnounce(66134, 4)
 local specWarnShadowStrike	= mod:NewSpecialWarning("SpecWarnShadowStrike", mod:IsTank())
 
 function mod:OnCombatStart(delay)
 	Burrowed = false 
-	timerAdds:Start(10-delay) 
-	warnAdds:Schedule(10-delay) 
-	self:ScheduleMethod(10-delay, "Adds")
+	-- Adds
+	timerAdds:Start(9-delay) 
+	warnAdds:Schedule(9-delay) 
+	self:ScheduleMethod(9-delay, "Adds")
+	-- Submerge
 	warnSubmergeSoon:Schedule(70-delay)
 	specWarnSubmergeSoon:Schedule(70-delay)
-	timerSubmerge:Start(80-delay)
-	enrageTimer:Start(-delay)
-	timerFreezingSlash:Start(-delay)
+	timerSubmerge:Start(-delay)
+	-- Others
+	timerFreezingSlashCD:Start(10-delay)
 	if mod:IsDifficulty("heroic10") or mod:IsDifficulty("heroic25") then
 		timerShadowStrike:Start()
-		preWarnShadowStrike:Schedule(25.5-delay)
-		self:ScheduleMethod(30.5-delay, "ShadowStrike")
+		preWarnShadowStrike:Schedule(25-delay)
+		self:ScheduleMethod(30-delay, "ShadowStrike")
 	end
+	-- Enrage
+	enrageTimer:Start(-delay)
 end
 
 function mod:Adds() 
@@ -95,9 +101,9 @@ function mod:ShadowStrike()
 	if self:IsInCombat() then
 		timerShadowStrike:Start()
 		preWarnShadowStrike:Cancel()
-		preWarnShadowStrike:Schedule(25.5)
+		preWarnShadowStrike:Schedule(25)
 		self:UnscheduleMethod("ShadowStrike")
-		self:ScheduleMethod(30.5, "ShadowStrike")
+		self:ScheduleMethod(30, "ShadowStrike")
 	end
 end
 
@@ -147,7 +153,7 @@ function mod:SPELL_AURA_APPLIED(args)
 		timerPCold:Show() 
 	elseif args:IsSpellID(66012) then							-- Freezing Slash
 		warnFreezingSlash:Show(args.destName)
-		timerFreezingSlash:Start()
+		timerFreezingSlashCD:Start()
 	elseif args:IsSpellID(10278) and self:IsInCombat() then		-- Hand of Protection
 		warnHoP:Show(args.destName)
 		timerHoP:Start(args.destName)
@@ -195,24 +201,26 @@ function mod:CHAT_MSG_RAID_BOSS_EMOTE(msg)
 		Burrowed = true
 		timerAdds:Cancel()
 		warnAdds:Cancel()
+		timerFreezingSlashCD:Stop()
+		timerShadowStrike:Stop()
+		preWarnShadowStrike:Cancel()
+		self:UnscheduleMethod("ShadowStrike")
 		warnSubmerge:Show()
-		warnEmergeSoon:Schedule(55)
+		warnEmergeSoon:Schedule(52)
 		timerEmerge:Start()
-		timerFreezingSlash:Stop()
+		
 	elseif msg and msg:find(L.Emerge) then
 		Burrowed = false
-		timerAdds:Start(5)
-		warnAdds:Schedule(5)
-		self:ScheduleMethod(5, "Adds")
+		timerAdds:Start(9)
+		warnAdds:Schedule(9)
+		self:ScheduleMethod(9, "Adds")
 		warnEmerge:Show()
 		warnSubmergeSoon:Schedule(65)
 		specWarnSubmergeSoon:Schedule(65)
 		timerSubmerge:Start()
+		timerFreezingSlashCD:Start()
 		if mod:IsDifficulty("heroic10") or mod:IsDifficulty("heroic25") then
-			timerShadowStrike:Stop()
-			preWarnShadowStrike:Cancel()
-			self:UnscheduleMethod("ShadowStrike")
-			self:ScheduleMethod(5.5, "ShadowStrike")  -- 35-36sec after Emerge next ShadowStrike
+			self:ScheduleMethod(0.1, "ShadowStrike")
 		end
 	end
 end
@@ -222,5 +230,12 @@ function mod:RemoveBuffs()
 	CancelUnitBuff("player", (GetSpellInfo(48161)))		-- Power Word: Fortitude
 	CancelUnitBuff("player", (GetSpellInfo(48162)))		-- Prayer of Fortitude
 	CancelUnitBuff("player", (GetSpellInfo(69377)))		-- Runescroll of Fortitude
+end
+
+function mod:SPELL_CAST_SUCCESS(args)
+	if args:IsSpellID(10278) and self:IsInCombat() then		-- Hand of Protection
+		warnHoP:Show(args.destName)
+		timerHoP:Start(args.destName)
+	end
 end
 
