@@ -37,19 +37,21 @@ local specWarnFlame				= mod:NewSpecialWarningRun(67072)
 local specWarnFlesh				= mod:NewSpecialWarningYou(66237)
 local specWarnKiss				= mod:NewSpecialWarningYou(67907, false)
 local specWarnNetherPower		= mod:NewSpecialWarning("SpecWarnNetherPower", isDispeller)
-local specWarnFelInferno		= mod:NewSpecialWarningMove(68718)
+local specWarnFelInferno		= mod:NewSpecialWarningMove(68718) 
 local SpecWarnFelFireball		= mod:NewSpecialWarning("SpecWarnFelFireball", false)
 local SpecWarnFelFireballDispel	= mod:NewSpecialWarningDispel(66965, isMagicDispeller)
 
-local timerCombatStart			= mod:NewTimer(84, "TimerCombatStart", 2457)--rollplay for first pull
+local timerCombatStart			= mod:NewTimer(71.5, "TimerCombatStart", 2457) -- rollplay for first pull
 local enrageTimer				= mod:NewBerserkTimer(600)
-local timerFlame 				= mod:NewTargetTimer(8, 68123)--There are 8 debuff Ids. Since we detect first to warn, use an 8sec timer to cover duration of trigger spell and damage debuff.
-local timerFlameCD				= mod:NewCDTimer(30, 68125)
-local timerNetherPowerCD		= mod:NewCDTimer(42, 67009)
+local timerFlame 				= mod:NewTargetTimer(8, 68123) 		-- There are 8 debuff Ids. Since we detect first to warn, use an 8sec timer to cover duration of trigger spell and damage debuff.
+local timerFlameCD				= mod:NewCDTimer(30, 68125) 		-- Every 30 sec
+local timerNetherPowerCD		= mod:NewCDTimer(25, 67108) 		-- Every 25-45 sec
 local timerFlesh				= mod:NewTargetTimer(12, 67049)
-local timerFleshCD				= mod:NewCDTimer(23, 67051) 
-local timerPortalCD				= mod:NewCDTimer(120, 67900)
-local timerVolcanoCD			= mod:NewCDTimer(120, 67901)
+local timerFleshCD				= mod:NewCDTimer(20, 67051) 		-- Every 20-25 sec
+local timerPortalCD				= mod:NewNextTimer(120, 67900) 		-- Every 120 sec
+local timerVolcanoCD			= mod:NewNextTimer(120, 67901) 		-- Every 120 sec
+local timerFelFireballCD		= mod:NewCDTimer(10, 66532, false) 	-- Every 10-15 sec
+local timerFelLightningCD		= mod:NewCDTimer(10, 66528, false) 	-- Every 10-15 sec
 
 mod:AddBoolOption("LegionFlameWhisper", false, "announce")
 mod:AddBoolOption("LegionFlameRunSound", true)
@@ -64,12 +66,15 @@ function mod:OnCombatStart(delay)
 		DBM.BossHealth:Show(L.name)
 		DBM.BossHealth:AddBoss(34780, L.name)
 	end
+	warnPortalSoon:Schedule(15-delay)	-- Nether Portal 20 sec. after pull, next every 120 sec.
 	timerPortalCD:Start(20-delay)
-	warnPortalSoon:Schedule(15-delay)
+	warnVolcanoSoon:Schedule(75-delay)	-- Volcano 80 sec. after pull, next every 120 sec.
 	timerVolcanoCD:Start(80-delay)
-	warnVolcanoSoon:Schedule(75-delay)
-	timerFleshCD:Start(14-delay)
-	timerFlameCD:Start(20-delay)
+	timerFleshCD:Start(25-delay) 		-- Incinerate Flesh 24-26 sec. after pull, next every 20-25 sec.
+	timerFlameCD:Start(-delay)
+	timerNetherPowerCD:Start(-delay)
+	timerFelFireballCD:Start(5)
+	timerFelLightningCD:Start()
 	enrageTimer:Start(-delay)
 end
 
@@ -134,7 +139,7 @@ do
 end
 
 function mod:SPELL_AURA_APPLIED(args)
-	if args:IsSpellID(67051, 67050, 67049, 66237) then			-- Incinerate Flesh
+	if args:IsSpellID(67051, 67050, 67049, 66237) then	-- Incinerate Flesh
 		warnFlesh:Show(args.destName)
 		timerFlesh:Start(args.destName)
 		timerFleshCD:Start()
@@ -147,7 +152,7 @@ function mod:SPELL_AURA_APPLIED(args)
 		setIncinerateTarget(self, args.destGUID, args.destName)
 		self:Schedule(15, clearIncinerateTarget, self, args.destName)
 
-	elseif args:IsSpellID(66197, 68123, 68124, 68125) then		-- Legion Flame ids 66199, 68126, 68127, 68128 (second debuff) do the actual damage. First 2 seconds are trigger debuff only.
+	elseif args:IsSpellID(66197, 68123, 68124, 68125) then	-- Legion Flame ids 66199, 68126, 68127, 68128 (second debuff) do the actual damage. First 2 seconds are trigger debuff only.
 		local targetname = args.destName
 		timerFlame:Start(args.destName)
 		timerFlameCD:Start()		
@@ -166,14 +171,16 @@ function mod:SPELL_AURA_APPLIED(args)
 	elseif args:IsSpellID(66334, 67905, 67906, 67907) and args:IsPlayer() then
 		specWarnKiss:Show()
 
-	elseif args:IsSpellID(66532, 66963, 66964, 66965) then		-- Fel Fireball (announce if tank gets debuff for dispel)
-		warnFelFireball:Show()
+	elseif args:IsSpellID(66532, 66963, 66964, 66965) then	-- Fel Fireball (announce if tank gets debuff for dispel)
 		SpecWarnFelFireballDispel:Show(args.destName)
+
+	elseif args:IsSpellID(66242, 67061, 67059, 67060) then	-- blooper
+		PlaySoundFile("Sound\\Creature\\Bronjahm\\FS_Bronjahm_Death01.wav")
 	end
 end
 
 function mod:SPELL_AURA_REMOVED(args)
-	if args:IsSpellID(67051, 67050, 67049, 66237) then			-- Incinerate Flesh
+	if args:IsSpellID(67051, 67050, 67049, 66237) then	-- Incinerate Flesh
 		timerFlesh:Stop()
 		clearIncinerateTarget(self, args.destName)
 	end
@@ -181,31 +188,38 @@ end
 
 function mod:SPELL_CAST_START(args)
 	if args:IsSpellID(66532, 66963, 66964, 66965) and UnitName("target") == L.name then	-- Fel Fireball (track cast for interupt, only when targeted)
+		warnFelFireball:Show()
 		SpecWarnFelFireball:Show()
+		timerFelFireballCD:Start()
 	end
 end
 
 function mod:SPELL_CAST_SUCCESS(args)
-	if args:IsSpellID(67009) then								-- Nether Power
+	if args:IsSpellID(66228, 67009, 67106, 67107) then		-- Nether Power
 		warnNetherPower:Show()
 		timerNetherPowerCD:Start()
 		specWarnNetherPower:Show()
-
-	elseif args:IsSpellID(67901, 67902, 67903, 66258) then		-- Infernal Volcano
-		timerVolcanoCD:Start()
-		warnVolcanoSoon:Schedule(110)
-
-	elseif args:IsSpellID(67900, 67899, 67898, 66269) then		-- Nether Portal
-		timerPortalCD:Start()
-		warnPortalSoon:Schedule(110)
-	
-	elseif args:IsSpellID(66197, 68123, 68124, 68125) then		-- Legion Flame
+		timerPortalCD:AddTime(5)
+		timerVolcanoCD:AddTime(5)
+		timerFlameCD:AddTime(5)
+		timerFleshCD:AddTime(5)
+		timerFelFireballCD:AddTime(5)
+		timerFelLightningCD:AddTime(5)
+	elseif args:IsSpellID(66197, 68123, 68124, 68125) then	-- Legion Flame
 		warnFlame:Show(args.destName)
+	elseif args:IsSpellID(66528, 67029, 67030, 67031) then 	-- Fel Lightning
+		timerFelLightningCD:Start()
 	end
 end
 
 function mod:CHAT_MSG_MONSTER_YELL(msg)
 	if msg == L.FirstPull or msg:find(L.FirstPull) then
 		timerCombatStart:Start()
+	elseif msg == L.PortalSpawn or msg:find(L.PortalSpawn) then 	-- Nether Portal
+		timerPortalCD:Start()
+		warnPortalSoon:Schedule(110)
+	elseif msg == L.VolcanoSpawn or msg:find(L.VolcanoSpawn) then 	-- Infernal Volcano
+		timerVolcanoCD:Start()
+		warnVolcanoSoon:Schedule(110)
 	end
 end
