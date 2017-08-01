@@ -37,7 +37,7 @@ local timerLightTouch				= mod:NewTargetTimer(20, 67298)
 local timerDarkTouch				= mod:NewTargetTimer(20, 67283)
 local timerAchieve					= mod:NewAchievementTimer(180, 3815, "TimerSpeedKill")
 
-mod:AddBoolOption("SpecialWarnOnDebuff", false, "announce")
+mod:AddBoolOption("SpecialWarnOnDebuff", true, "announce")
 mod:AddBoolOption("SetIconOnDebuffTarget", true)
 mod:AddBoolOption("HealthFrame", true)
 
@@ -50,9 +50,9 @@ function mod:OnCombatStart(delay)
 	warnSpecial:Schedule(40-delay)
 	timerAchieve:Start(-delay)
 	if self:IsDifficulty("heroic10", "heroic25") then
-		enrageTimer:Start(360-delay)
+		enrageTimer:Start(-delay)
 	else
-		enrageTimer:Start(480-delay)
+		enrageTimer:Start(600-delay)
 	end
 	debuffIcon = 8
 end
@@ -185,7 +185,7 @@ function mod:SPELL_AURA_APPLIED(args)
 		end
 		debuffTargets[#debuffTargets + 1] = args.destName
 		self:UnscheduleMethod("warnDebuff")
-		self:ScheduleMethod(0.75, "warnDebuff")
+		self:ScheduleMethod(0.9, "warnDebuff")
 	elseif args:IsSpellID(67246, 65879, 65916, 67244) or args:IsSpellID(67245, 67248, 67249, 67250) then	-- Power of the Twins 
 		self:Schedule(0.1, showPowerWarning, self, args:GetDestCreatureID())
 	elseif args:IsSpellID(65874, 67256, 67257, 67258) or args:IsSpellID(65858, 67259, 67260, 67261) then  -- Shield of Darkness/Lights
@@ -210,7 +210,7 @@ function mod:SPELL_AURA_REMOVED(args)
 			self:SetIcon(args.destName, 0)
 		end
 	elseif args:IsSpellID(66001, 67281, 67282, 67283) then	-- Touch of Darkness
-		timerDarkTouch:Start(args.destName)
+		timerDarkTouch:Stop(args.destName)
 		if self.Options.SetIconOnDebuffTarget then
 			self:SetIcon(args.destName, 0)
 		end
