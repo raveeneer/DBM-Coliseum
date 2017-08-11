@@ -195,7 +195,11 @@ function mod:SPELL_CAST_START(args)
 end
 
 function mod:SPELL_CAST_SUCCESS(args)
-	if args:IsSpellID(66228, 67009, 67106, 67107) then		-- Nether Power
+	if args:IsSpellID(66197, 68123, 68124, 68125) then	-- Legion Flame
+		warnFlame:Show(args.destName)
+	elseif args:IsSpellID(66528, 67029, 67030, 67031) then 	-- Fel Lightning
+		timerFelLightningCD:Start()
+	elseif args:IsSpellID(66228, 67107, 67106, 67108) then	-- Nether Power
 		warnNetherPower:Show()
 		timerNetherPowerCD:Start()
 		specWarnNetherPower:Show()
@@ -205,10 +209,6 @@ function mod:SPELL_CAST_SUCCESS(args)
 		timerFleshCD:AddTime(5)
 		timerFelFireballCD:AddTime(5)
 		timerFelLightningCD:AddTime(5)
-	elseif args:IsSpellID(66197, 68123, 68124, 68125) then	-- Legion Flame
-		warnFlame:Show(args.destName)
-	elseif args:IsSpellID(66528, 67029, 67030, 67031) then 	-- Fel Lightning
-		timerFelLightningCD:Start()
 	end
 end
 
