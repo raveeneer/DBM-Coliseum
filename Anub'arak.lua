@@ -22,7 +22,7 @@ mod:AddBoolOption("RemoveHealthBuffsInP3", false)
 
 -- Adds
 local warnAdds				= mod:NewAnnounce("warnAdds", 3, 45419)
-local timerAdds				= mod:NewTimer(45, "timerAdds", 45419)
+local timerAdds				= mod:NewTimer(45, "timerAdds", 45419) -- 8-10 sec. after pull, 45 sec. every next
 local Burrowed				= false 
 
 -- Pursue
@@ -37,7 +37,7 @@ mod:AddBoolOption("PursueIcon")
 -- Emerge
 local warnEmerge			= mod:NewAnnounce("WarnEmerge", 3, "Interface\\AddOns\\DBM-Core\\textures\\CryptFiendUnBurrow.blp")
 local warnEmergeSoon		= mod:NewAnnounce("WarnEmergeSoon", 1, "Interface\\AddOns\\DBM-Core\\textures\\CryptFiendUnBurrow.blp")
-local timerEmerge			= mod:NewTimer(62, "TimerEmerge", "Interface\\AddOns\\DBM-Core\\textures\\CryptFiendUnBurrow.blp")
+local timerEmerge			= mod:NewTimer(60, "TimerEmerge", "Interface\\AddOns\\DBM-Core\\textures\\CryptFiendUnBurrow.blp")
 
 -- Submerge
 local warnSubmerge			= mod:NewAnnounce("WarnSubmerge", 3, "Interface\\AddOns\\DBM-Core\\textures\\CryptFiendBurrow.blp")
@@ -51,14 +51,14 @@ local enrageTimer			= mod:NewBerserkTimer(600)
 
 -- Penetrating Cold 
 local specWarnPCold			= mod:NewSpecialWarningYou(68510, false)
-local timerPCold			= mod:NewBuffActiveTimer(18, 68509)
+local timerPCold			= mod:NewBuffActiveTimer(20, 68509) -- 15-20 sec. after pull, 20 sec. every next
 mod:AddBoolOption("SetIconsOnPCold", true)
 mod:AddBoolOption("AnnouncePColdIcons", false)
 mod:AddBoolOption("AnnouncePColdIconsRemoved", false)
 
 -- Freezing Slash 
 local warnFreezingSlash		= mod:NewTargetAnnounce(66012, 2, nil, mod:IsHealer() or mod:IsTank())
-local timerFreezingSlashCD	= mod:NewCDTimer(15, 66012, nil, mod:IsHealer() or mod:IsTank())
+local timerFreezingSlashCD	= mod:NewCDTimer(15, 66012, nil, mod:IsHealer() or mod:IsTank()) -- 7-15 sec. after pull, 15-20 sec. every next
 
 -- Shadow Strike 
 local timerShadowStrike		= mod:NewNextTimer(30, 66134)
@@ -206,7 +206,7 @@ function mod:CHAT_MSG_RAID_BOSS_EMOTE(msg)
 		preWarnShadowStrike:Cancel()
 		self:UnscheduleMethod("ShadowStrike")
 		warnSubmerge:Show()
-		warnEmergeSoon:Schedule(52)
+		warnEmergeSoon:Schedule(50)
 		timerEmerge:Start()
 		
 	elseif msg and msg:find(L.Emerge) then
