@@ -175,7 +175,7 @@ function mod:SPELL_AURA_APPLIED(args)
 		SpecWarnFelFireballDispel:Show(args.destName)
 
 	elseif args:IsSpellID(66242, 67061, 67059, 67060) then	-- blooper
-		PlaySoundFile("Sound\\Creature\\Bronjahm\\FS_Bronjahm_Death01.wav")
+		PlaySoundFile("Interface\\AddOns\\DBM-Core\\sounds\\fail.mp3", "Master")
 	end
 end
 
