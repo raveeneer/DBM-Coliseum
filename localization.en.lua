@@ -17,7 +17,10 @@ L:SetMiscLocalization{
 	Gormok		= "Gormok the Impaler",
 	Acidmaw		= "Acidmaw",
 	Dreadscale	= "Dreadscale",
-	Icehowl		= "Icehowl"
+	Submerge	= "^%%s buries itself in the earth!",
+	Emerge 		= "^%%s getting out of the ground!",
+	Icehowl		= "Icehowl",
+	YellCharge  = "Charge on me!"
 }
 
 L:SetOptionLocalization{
@@ -37,14 +40,16 @@ L:SetOptionLocalization{
 	TimerEmerge					= "Show timer for emerge",
 	TimerSubmerge				= "Show timer for submerge",
 	RangeFrame                  = "Show range frame in Phase 2",
-	IcehowlArrow				= "Show DBM arrow when Icehowl is about to charge near you"
+	IcehowlArrow				= "Show DBM arrow when Icehowl is about to charge near you",
+	YellOnCharge				= "Yell on Icehowl charge",
+	PlaySoundBloopers			= "Play sound bloopers"
 }
 
 L:SetTimerLocalization{
 	TimerNextBoss		= "Next boss",
 	TimerCombatStart	= "Combat starts",
 	TimerEmerge			= "Emerge",
-	TimerSubmerge		= "Submerge"
+	TimerSubmerge		= "Submerge~"
 }
 
 L:SetWarningLocalization{
