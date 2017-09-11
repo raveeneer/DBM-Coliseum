@@ -64,7 +64,7 @@ local timerWhirlCD			= mod:NewCDTimer(20, 67665) -- 10-12 sec. after pull, 15-20
 
 
 local timerCombatStart		= mod:NewTimer(11, "TimerCombatStart", 2457)
-local timerNextBoss			= mod:NewTimer(190, "TimerNextBoss", 2457)
+local timerNextBoss			= mod:NewTimer(178, "TimerNextBoss", 2457)
 
 mod:AddBoolOption("PingCharge")
 mod:AddBoolOption("SetIconOnChargeTarget", true)
@@ -134,7 +134,7 @@ end
 
 function mod:GromokStartTimers()
 	if self:IsDifficulty("heroic10", "heroic25") then
-		timerNextBoss:Start(154)
+		timerNextBoss:Start(165)
 	end
 	timerNextStompCD:Start(5) 
 	timerRisingAngerCD:Start(6) 
@@ -225,14 +225,13 @@ function mod:SPELL_AURA_APPLIED(args)
 		timerNextCrashCD:Start(30) --todo
 		if not self:IsDifficulty("heroic10", "heroic25") then
 			specWarnTranq:Show()
-		else
-			if self.Options.PlaySoundBloopers then
-				randomNumber = math.random(1,2)
-				if randomNumber == 1 then
-					PlaySoundFile("Interface\\AddOns\\DBM-Core\\sounds\\kur.mp3", "Master")
-				else
-					PlaySoundFile("Interface\\AddOns\\DBM-Core\\sounds\\fail.mp3", "Master")
-				end
+		end
+		if self.Options.PlaySoundBloopers then
+			randomNumber = math.random(1,2)
+			if randomNumber == 1 then
+				PlaySoundFile("Interface\\AddOns\\DBM-Core\\sounds\\kur.mp3", "Master")
+			else
+				PlaySoundFile("Interface\\AddOns\\DBM-Core\\sounds\\fail.mp3", "Master")
 			end
 		end
 	elseif args:IsSpellID(66758) then						-- Staggered Daze
@@ -369,9 +368,12 @@ end
 function mod:CHAT_MSG_MONSTER_YELL(msg)
 	if msg == L.Phase2 or msg:find(L.Phase2) then -- Acidmaw & Dreadscale
 		timerCombatStart:Show(15)
-		local timeLeftFromP1 = 154 - timerNextBoss:GetTime()
-		timerNextBoss:Stop()
-		timerNextBoss:Start(190 + timeLeftFromP1)
+		if self:IsDifficulty("heroic10", "heroic25") then
+			--local timeLeftFromP1 = 154 - timerNextBoss:GetTime()
+			timerNextBoss:Stop()
+			--timerNextBoss:Start(174 + timeLeftFromP1)
+			timerNextBoss:Start(178)
+		end
 		updateHealthFrame(2)
 		self:ScheduleMethod(15, "WormsEmerge")
 		if self.Options.RangeFrame then

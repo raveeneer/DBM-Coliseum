@@ -6,7 +6,8 @@ mod:SetCreatureID(34780)
 mod:SetMinCombatTime(30)
 mod:SetUsedIcons(7, 8)
 
-mod:RegisterCombat("combat")
+--mod:RegisterCombat("combat")
+mod:RegisterCombat("yell", L.Aggro)
 
 mod:RegisterEvents(
 	"SPELL_AURA_APPLIED",
@@ -53,6 +54,7 @@ local timerVolcanoCD			= mod:NewNextTimer(120, 67901) 		-- Every 120 sec
 local timerFelFireballCD		= mod:NewCDTimer(10, 66532, false) 	-- Every 10-15 sec
 local timerFelLightningCD		= mod:NewCDTimer(10, 66528, false) 	-- Every 10-15 sec
 
+
 mod:AddBoolOption("LegionFlameWhisper", false, "announce")
 mod:AddBoolOption("LegionFlameRunSound", true)
 mod:AddBoolOption("LegionFlameIcon", true)
@@ -61,15 +63,18 @@ mod:AddBoolOption("IncinerateFleshIcon", true)
 mod:RemoveOption("HealthFrame")
 mod:AddBoolOption("IncinerateShieldFrame", true, "misc")
 
+
 function mod:OnCombatStart(delay)
 	if self.Options.IncinerateShieldFrame then
 		DBM.BossHealth:Show(L.name)
 		DBM.BossHealth:AddBoss(34780, L.name)
 	end
-	warnPortalSoon:Schedule(15-delay)	-- Nether Portal 20 sec. after pull, next every 120 sec.
-	timerPortalCD:Start(20-delay)
-	warnVolcanoSoon:Schedule(75-delay)	-- Volcano 80 sec. after pull, next every 120 sec.
-	timerVolcanoCD:Start(80-delay)
+	warnPortalSoon:Schedule(15-delay)	
+	timerPortalCD:Start(20-delay)		-- Nether Portal 20 sec. after pull, next every 120 sec.
+	timePortal = GetTime()
+	warnVolcanoSoon:Schedule(80-delay)	-- 5 sec. longer (hack-fix for delay caused by Nether Power)
+	timerVolcanoCD:Start(80-delay)		-- Volcano 80 sec. after pull, next every 120 sec.
+	timeVolcano = GetTime()
 	timerFleshCD:Start(25-delay) 		-- Incinerate Flesh 24-26 sec. after pull, next every 20-25 sec.
 	timerFlameCD:Start(-delay)
 	timerNetherPowerCD:Start(-delay)
@@ -217,9 +222,9 @@ function mod:CHAT_MSG_MONSTER_YELL(msg)
 		timerCombatStart:Start()
 	elseif msg == L.PortalSpawn or msg:find(L.PortalSpawn) then 	-- Nether Portal
 		timerPortalCD:Start()
-		warnPortalSoon:Schedule(110)
+		warnPortalSoon:Schedule(130) -- 20 sec. longer (hack-fix for delay caused by Nether Power)
 	elseif msg == L.VolcanoSpawn or msg:find(L.VolcanoSpawn) then 	-- Infernal Volcano
 		timerVolcanoCD:Start()
-		warnVolcanoSoon:Schedule(110)
+		warnVolcanoSoon:Schedule(130) -- 20 sec. longer (hack-fix for delay caused by Nether Power)
 	end
 end
