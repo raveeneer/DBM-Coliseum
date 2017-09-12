@@ -71,10 +71,8 @@ function mod:OnCombatStart(delay)
 	end
 	warnPortalSoon:Schedule(15-delay)	
 	timerPortalCD:Start(20-delay)		-- Nether Portal 20 sec. after pull, next every 120 sec.
-	timePortal = GetTime()
 	warnVolcanoSoon:Schedule(80-delay)	-- 5 sec. longer (hack-fix for delay caused by Nether Power)
 	timerVolcanoCD:Start(80-delay)		-- Volcano 80 sec. after pull, next every 120 sec.
-	timeVolcano = GetTime()
 	timerFleshCD:Start(25-delay) 		-- Incinerate Flesh 24-26 sec. after pull, next every 20-25 sec.
 	timerFlameCD:Start(-delay)
 	timerNetherPowerCD:Start(-delay)
