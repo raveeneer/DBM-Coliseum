@@ -136,8 +136,8 @@ function mod:GromokStartTimers()
 	if self:IsDifficulty("heroic10", "heroic25") then
 		timerNextBoss:Start(165)
 	end
-	timerNextStompCD:Start(5) 
-	timerRisingAngerCD:Start(6) 
+	timerNextStompCD:Start(15) --5
+	timerRisingAngerCD:Start(16) --6
 end
 
 function mod:WormsEmerge()
