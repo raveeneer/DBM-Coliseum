@@ -262,7 +262,7 @@ L:SetOptionLocalization{
 	RemoveHealthBuffsInP3	= "Remove HP buffs at start of Phase 3", 
 	SetIconsOnPCold         = "Set icons on $spell:68510 targets",
 	AnnouncePColdIcons		= "Announce icons for $spell:68510 targets to raid chat\n(requires announce to be enabled and leader/promoted status)",
-	AnnouncePColdIconsRemoved	= "Also announce when icons are removed for $spell:68510\n(requires above option)",
+	AnnouncePColdIconsRemoved	= "Announce when icons are removed for $spell:68510\n",
 	SoundWarnShadowStrike = "Play voice counter 3...1 to Shadow Strike cast"
 }
 

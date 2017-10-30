@@ -53,8 +53,11 @@ local enrageTimer			= mod:NewBerserkTimer(600)
 -- Penetrating Cold 
 local specWarnPCold			= mod:NewSpecialWarningYou(68510, false)
 local timerPCold			= mod:NewBuffActiveTimer(20, 68509) -- 15-20 sec. after pull, 20 sec. every next
+local PColdTargets = {}
+local PColdIcon = 7 		-- handles icon distribution
+
 mod:AddBoolOption("SetIconsOnPCold", true)
-mod:AddBoolOption("AnnouncePColdIcons", false)
+--mod:AddBoolOption("AnnouncePColdIcons", false) -- disable due to PCold icon distribution changes
 mod:AddBoolOption("AnnouncePColdIconsRemoved", false)
 
 -- Freezing Slash 
@@ -89,6 +92,7 @@ function mod:OnCombatStart(delay)
 		end
 		self:ScheduleMethod(30-delay, "ShadowStrike")
 	end
+	PColdIcon = 7
 	-- Enrage
 	enrageTimer:Start(-delay)
 end
@@ -118,6 +122,13 @@ function mod:ShadowStrike()
 	end
 end
 
+function mod:ResetIconSet()
+	if PColdIcon < 7 then 		-- some icons were distributed
+		PColdIcon = 7			-- reset icon set (for new PCold cast)
+		table.wipe(PColdTargets)
+	end
+end
+
 -- SOUND FUNCTIONS
 function mod:ToShadowStrike3()
 	PlaySoundFile("Interface\\AddOns\\DBM-Core\\sounds\\3.mp3", "Master")
@@ -129,27 +140,6 @@ end
 
 function mod:ToShadowStrike1()
 	PlaySoundFile("Interface\\AddOns\\DBM-Core\\sounds\\1.mp3", "Master")
-end
-
-local PColdTargets = {}
-do
-	local function sort_by_group(v1, v2)
-		return DBM:GetRaidSubgroup(UnitName(v1)) < DBM:GetRaidSubgroup(UnitName(v2))
-	end
-	function mod:SetPcoldIcons()
-		if DBM:GetRaidRank() > 0 then
-			table.sort(PColdTargets, sort_by_group)
-			local PColdIcon = 7
-			for i, v in ipairs(PColdTargets) do
-				if self.Options.AnnouncePColdIcons then
-					SendChatMessage(L.PcoldIconSet:format(PColdIcon, UnitName(v)), "RAID")
-				end
-				self:SetIcon(UnitName(v), PColdIcon)
-				PColdIcon = PColdIcon - 1
-			end
-			table.wipe(PColdTargets)	
-		end
-	end
 end
 
 function mod:SPELL_AURA_APPLIED(args)
@@ -170,9 +160,9 @@ function mod:SPELL_AURA_APPLIED(args)
 		end
 		if self.Options.SetIconsOnPCold then
 			table.insert(PColdTargets, DBM:GetRaidUnitId(args.destName))
-			if ((mod:IsDifficulty("normal25") or mod:IsDifficulty("heroic25")) and #PColdTargets >= 5) or ((mod:IsDifficulty("normal10") or mod:IsDifficulty("heroic10")) and #PColdTargets >= 2) then
-				self:SetPcoldIcons()--Sort and fire as early as possible once we have all targets.
-			end
+			self:SetIcon(args.destName, PColdIcon) 				-- setting icon
+			PColdIcon = PColdIcon - 1 							-- set next icon to be different
+			self:ScheduleMethod(16, "ResetIconSet")				-- reset icon set after 16 sec. (time should be longer than 1 sec. and must be lower than 18sec.!)
 		end
 		timerPCold:Show() 
 	elseif args:IsSpellID(66012) then							-- Freezing Slash
@@ -189,7 +179,7 @@ mod.SPELL_AURA_REFRESH = mod.SPELL_AURA_APPLIED
 function mod:SPELL_AURA_REMOVED(args)
 	if args:IsSpellID(66013, 67700, 68509, 68510) then			-- Penetrating Cold
 		mod:SetIcon(args.destName, 0)
-		if (self.Options.AnnouncePColdIcons and self.Options.AnnouncePColdIconsRemoved) and DBM:GetRaidRank() >= 1 then
+		if self.Options.AnnouncePColdIconsRemoved and DBM:GetRaidRank() >= 1 then
 			SendChatMessage(L.PcoldIconRemoved:format(args.destName), "RAID")
 		end
 	elseif args:IsSpellID(10278) and self:IsInCombat() then		-- Hand of Protection
